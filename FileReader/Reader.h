@@ -19,8 +19,8 @@ class Reader {
         QueueHandler* queueHandler;
     public:
         int _threads = 0;
-        Reader(int threads, QueueHandler* _queueHandler) {
-            _threads = threads;
+        Reader(QueueHandler* _queueHandler) {
+            _threads = _queueHandler->_threads;
             queueHandler = _queueHandler;
             std::string line;
             std::ifstream in(R"(C:\Users\shine\Desktop\Dev\ParallelSort\FileReader\text.txt)");
@@ -34,9 +34,49 @@ class Reader {
             SendTasksToQueue();
             std::this_thread::sleep_for (std::chrono::seconds(1));
             queueHandler->Dispose();
-            std::cout << "123" << std:: endl;
-            std::this_thread::sleep_for (std::chrono::seconds(4));
-            outputVector(*(*tasks)[0]);
+            MergeVectors();
+        }
+
+        void MergeVectors() {
+            std::vector<std::string> initVector;
+            if(tasks->size() > 0) {
+                initVector = *(*tasks)[0];
+            }
+            for (int i = 1; i < tasks->size(); ++i) {
+                initVector = MergeTwoVectors(initVector, *(*tasks)[i]);
+            }
+            outputVector(initVector);
+        }
+
+        std::vector<std::string> MergeTwoVectors(std::vector<std::string> first,  std::vector<std::string> second) {
+            int firstSize = first.size();
+            int secondSize = second.size();
+            int i = 0, j = 0;
+            std::vector<std::string> result;
+
+//            result.reserve(firstSize + secondSize);
+            while (i < firstSize && j < secondSize) {
+                if (first[i] <= second[j])
+                {
+                    result.push_back(first[i]);
+                    i++;
+                } else {
+                    result.push_back(second[j]);
+                    j++;
+                }
+            }
+
+            while (i < firstSize) {
+                result.push_back(first[i]);
+                i++;
+            }
+
+            while (j < secondSize) {
+                result.push_back(second[j]);
+                j++;
+            }
+
+            return result;
         }
 
         void SendTasksToQueue() {
@@ -61,7 +101,6 @@ class Reader {
         void AddTask(std::vector<std::string>* vector) {
             queueHandler->EnqueueTask([vector] {
                 std::sort(vector->begin(), vector->end());
-                std::cout << "Sorted!" << std::endl;
             });
         }
 

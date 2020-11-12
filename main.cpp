@@ -5,7 +5,8 @@
 #include "FileReader/Reader.h"
 
 int main() {
-    QueueHandler queueHandler = QueueHandler(13);
-    Reader reader = Reader(13, &queueHandler);
+    int threads = 4;
+    QueueHandler queueHandler = QueueHandler(threads);
+    Reader reader = Reader(&queueHandler);
     return 0;
 }

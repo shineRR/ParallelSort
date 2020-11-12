@@ -13,7 +13,6 @@
 
 class TaskQueue {
     typedef std::function<void()> Func;
-//    typedef void (*Func)(std::vector<std::string>);
 private:
     std::mutex mutex;
     std::queue<Func> queue;
@@ -38,7 +37,6 @@ public:
 
     int queue_size() {
         int size = queue.size();
-
         return size;
     }
 };

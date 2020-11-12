@@ -56,7 +56,13 @@ class QueueHandler {
         }
 
         void Dispose() {
-            mutex.lock();
+            while (true)
+            {
+                std::this_thread::sleep_for (std::chrono::seconds(1));
+                mutex.lock();
+                if (_taskQueue.queue_size() == 0) break;
+                mutex.unlock();
+            }
             isActive = false;
             mutex.unlock();
             for(auto &worker : workers) {
