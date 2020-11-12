@@ -14,18 +14,15 @@
 #include <tchar.h>
 #include <iostream>
 
-#define MAX_THREADS 2
-
-typedef void (*Func)();
-
 class QueueHandler {
+    typedef std::function<void()> Func;
     private:
         std::mutex mutex;
         TaskQueue _taskQueue;
         bool isActive = true;
-        HANDLE  hThreadArray[MAX_THREADS]{};
+        std::vector<std::thread> workers;
     public:
-
+        int _threads = 0;
         static void Print() {
             std::cout << "Print" << std::endl;
         }
@@ -36,42 +33,35 @@ class QueueHandler {
             return 0;
         }
 
-        QueueHandler() {
-            for (int i = 0; i < 5; ++i) {
-                _taskQueue.EnqueueTask(Print);
+        explicit QueueHandler(int threads) {
+            _threads = threads;
+            for (int i = 0; i < _threads; ++i) {
+                workers.emplace_back(start_thread, this);
             }
-            for (int i = 0; i < MAX_THREADS; ++i) {
-                hThreadArray[i] = CreateThread(
-                        nullptr,                          // default security attributes
-                        0,                                    // use default stack size
-                        (LPTHREAD_START_ROUTINE)start_thread,           // thread function name
-                        this,                                 // argument to thread function
-                        0,                                 // use default creation flags
-                        nullptr);                              // returns the thread identifier
-            }
-            for (int i = 0; i < 5; ++i) {
-                _taskQueue.EnqueueTask(Print);
-            }
-            WaitForMultipleObjects(MAX_THREADS, hThreadArray, TRUE, INFINITE);
         }
 
         void TaskSelectionQueue() {
             while (isActive) {
                 mutex.lock();
                 Func function = _taskQueue.DequeueTask();
+                mutex.unlock();
                 if (function != nullptr)
                     function();
-                mutex.unlock();
                 std::this_thread::sleep_for (std::chrono::seconds(1));
-                if (_taskQueue.queue_size() == 0)
-                    Dispose();
             }
+        }
+
+        void EnqueueTask(Func func) {
+            _taskQueue.EnqueueTask(func);
         }
 
         void Dispose() {
             mutex.lock();
             isActive = false;
             mutex.unlock();
+            for(auto &worker : workers) {
+                worker.join();
+            }
         }
 };
 

@@ -5,12 +5,15 @@
 #ifndef PARALLELSORT_TASKQUEUE_H
 #define PARALLELSORT_TASKQUEUE_H
 
+#include <functional>
+
 #include <queue>
 #include <mutex>
 #include <iostream>
 
 class TaskQueue {
-    typedef void (*Func)();
+    typedef std::function<void()> Func;
+//    typedef void (*Func)(std::vector<std::string>);
 private:
     std::mutex mutex;
     std::queue<Func> queue;
@@ -29,7 +32,6 @@ public:
         function = queue.front();
         mutex.lock();
         queue.pop();
-        std::cout << queue_size() << std::endl;
         mutex.unlock();
         return function;
     }

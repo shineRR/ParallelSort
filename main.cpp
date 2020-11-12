@@ -2,13 +2,10 @@
 #include <mutex>
 #include "TaskQueue/TaskQueue.h"
 #include "QueueHandler/QueueHandler.h"
-
-int i = 0;
+#include "FileReader/Reader.h"
 
 int main() {
-    QueueHandler queueHandler = QueueHandler();
-
-
-//    std::cout << i << std::endl;
+    QueueHandler queueHandler = QueueHandler(13);
+    Reader reader = Reader(13, &queueHandler);
     return 0;
 }
